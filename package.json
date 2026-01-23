@@ -1,0 +1,38 @@
+{
+  "name": "baby-elephant-orm",
+  "version": "1.0.0",
+  "description": "baby-elephany-orm is a custom build object relationship management package for PostgreSQL, which improves code readability, and code re-usability. It is easy to use and can support multiple types of conditions and variuos joins.",
+  "main": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krishnatamakuwala/baby-elephant-orm.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Krishna Tamakuwala",
+    "email": "krishna02122001@gmail.com"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/krishnatamakuwala/baby-elephant-orm/issues"
+  },
+  "homepage": "https://github.com/krishnatamakuwala/baby-elephant-orm#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}
