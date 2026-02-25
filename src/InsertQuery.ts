@@ -1,6 +1,6 @@
 import { BaseQuery, IPreparedQuery, IQueryParams } from "./BaseQuery";
 
-export type InsertQueryParams = Pick<IQueryParams, "tableName" | "insertColumns"> & { values: unknown[] | unknown[][] }
+export type InsertQueryParams = Pick<IQueryParams, "tableSchema" | "insertColumns"> & { values: unknown[] | unknown[][] }
 
 export class InsertQuery extends BaseQuery {
     private values: unknown[] | unknown[][];
@@ -50,6 +50,6 @@ export class InsertQuery extends BaseQuery {
             insertPlaceholders = "(" + this.values.map((value, i) => `$${i + 1}`).join(", ") + ")";
             values = this.values;
         }
-        return { query: `INSERT INTO ${this.tableName} (${insertColumns}) VALUES ${insertPlaceholders} RETURNING *;`, params: values };
+        return { query: `INSERT INTO ${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName} (${insertColumns}) VALUES ${insertPlaceholders} RETURNING *;`, params: values };
     }
 }

@@ -1,3 +1,6 @@
+/**
+ * Query Comparison Operator
+ */
 export enum QueryOperator {
     equal = "=",
     notEqual = "!=",

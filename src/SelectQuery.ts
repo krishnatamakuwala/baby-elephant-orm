@@ -5,8 +5,8 @@ export type SelectQueryParams = Omit<IQueryParams, "insertColumns">
 export class SelectQuery extends BaseQuery {
     constructor(params: SelectQueryParams) {
         params.columns = params.columns?.map((column) => {
-            column.tableName = column.tableName ?? params.tableName;
-            column.alias = column.alias ? `"${column.alias}"` : (`"${column.tableName}.${column.columnName}"` + (column.aggregateFunction ? `.${column.aggregateFunction}` : ""));
+            column.tableSchema = column.tableSchema ?? params.tableSchema;
+            column.alias = column.alias ? `"${column.alias}"` : (`"${column.tableSchema.schemaName ? column.tableSchema.schemaName + "." + column.tableSchema.tableName : column.tableSchema.tableName}.${column.columnName}"` + (column.aggregateFunction ? `.${column.aggregateFunction}` : ""));
             return column;
         });
         super(params);
@@ -23,16 +23,15 @@ export class SelectQuery extends BaseQuery {
                         columnName += `${aggregateFunction}(`;
                         i++;
                     });
-                    columnName += `${column.tableName}.${column.columnName}`;
+                    columnName += `${column.tableSchema?.schemaName ? column.tableSchema.schemaName + "." + column.tableSchema.tableName : column.tableSchema?.tableName}.${column.columnName}`;
                     for (let index = 1; index < i; index++) {
                         columnName += ")";
                     }
                 } else if (column.aggregateFunction) {
-                    columnName = `${column.aggregateFunction}(${column.tableName}.${column.columnName})`
+                    columnName = `${column.aggregateFunction}(${column.tableSchema?.schemaName ? column.tableSchema.schemaName + "." + column.tableSchema.tableName : column.tableSchema?.tableName}.${column.columnName})`
                 } else {
-                    columnName = `${column.tableName}.${column.columnName}`
+                    columnName = `${column.tableSchema?.schemaName ? column.tableSchema.schemaName + "." + column.tableSchema.tableName : column.tableSchema?.tableName}.${column.columnName}`
                 }
-                // const columnName = column.aggregateFunction ? `${column.aggregateFunction}(${column.tableName}.${column.columnName})` : `${column.tableName}.${column.columnName}`;
                 return `${columnName} as ${column.alias}`;
             }).join(", ");
         }
@@ -52,6 +51,6 @@ export class SelectQuery extends BaseQuery {
             }).join(", ");
         }
         
-        return { query: `SELECT\n${selectColumns}\nFROM ${this.tableName}${this.getJoinClause()} ${whereClause.query}${ordersClause}${limitClause}${offsetClause};`, params: whereClause.params };
+        return { query: `SELECT\n${selectColumns}\nFROM ${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName}${this.getJoinClause()} ${whereClause.query}${ordersClause}${limitClause}${offsetClause};`, params: whereClause.params };
     }
 }

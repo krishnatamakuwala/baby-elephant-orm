@@ -1,6 +1,6 @@
 import { BaseQuery, IPreparedQuery, IQueryParams, IUpdate } from "./BaseQuery";
 
-export type UpdateQueryParams = Pick<IQueryParams, "tableName" | "conditions"> & { updates: IUpdate[] }
+export type UpdateQueryParams = Pick<IQueryParams, "tableSchema" | "conditions"> & { updates: IUpdate[] }
 
 export class UpdateQuery extends BaseQuery {
     private updates: IUpdate[];
@@ -21,6 +21,6 @@ export class UpdateQuery extends BaseQuery {
                 whereClause.params.push(update.columnValue);
                 return `${update.columnName} = $${i}`;
             }).join(", ");
-        return { query: `UPDATE ${this.tableName} SET ${updatePairs} ${whereClause.query} ${this.getJoinClause()} RETURNING *;`, params: whereClause.params };
+        return { query: `UPDATE ${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName} SET ${updatePairs} ${whereClause.query} ${this.getJoinClause()} RETURNING *;`, params: whereClause.params };
     }
 }

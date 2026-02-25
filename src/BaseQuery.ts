@@ -3,45 +3,63 @@ import { OrderDirection } from "./enums/OrderDirection";
 import { QueryAggregateFunction } from "./enums/QueryAggregateFunction";
 import { QueryOperator } from "./enums/QueryOperator";
 
+/**
+ * Query Condition Clause
+ */
 export interface ICondition {
     columnName: string;
     columnValue: string | number | boolean | object;
     operator: QueryOperator; // e.g., '=', '>', '<', 'LIKE', etc.
-    tableName?: string;
+    tableSchema?: ITableSchema;
 }
 
+/**
+ * Join Condition Cluase
+ */
 export interface IJoinCondition {
-    primaryTableName: string;
+    primaryTableSchema: ITableSchema;
     primaryColumnName: string;
     operator: QueryOperator;
-    secondaryTableName: string;
+    secondaryTableSchema: ITableSchema;
     secondaryColumnName: string;
 }
 
+/**
+ * Join Clause
+ */
 export interface IJoin {
-    tableName: string;
+    tableSchema: ITableSchema;
     tableAliasName?: string;
     joinType: JoinType;
     joinCondition: IJoinCondition[];
 }
 
+/**
+ * Update Clause
+ */
 export interface IUpdate {
     columnName: string;
     columnValue: string | number | boolean | object | null;
     updateIfNull?: boolean;
 }
 
+/**
+ * Query Parameters
+ */
 export interface IQueryParams {
-    tableName: string;
-    columns?: IColumns[]; // For SELECT or INSERT queries
+    tableSchema: ITableSchema;
+    columns?: IColumns[];
     insertColumns?: string[];
-    conditions?: Array<ICondition[]>; // WHERE clause as an object
+    conditions?: Array<ICondition[]>;
     joins?: IJoin[];
     limit?: number;
     offset?: number;
     orders?: IOrders[];
 }
 
+/**
+ * Query Order Clause
+ */
 export interface IOrders {
     columnName: string;
     modelKey: string;
@@ -49,24 +67,41 @@ export interface IOrders {
     aliasId?: number;
 }
 
+/**
+ * Query Select Column Cluase
+ */
 export interface IColumns {
     columnName: string;
-    tableName?: string;
+    tableSchema?: ITableSchema;
     alias?: string;
     aggregateFunction?: QueryAggregateFunction | QueryAggregateFunction[];
 }
 
+/**
+ * Prepared Query
+ */
 export interface IPreparedQuery {
     query: string,
     params: unknown[]
 }
 
+/**
+ * Count
+ */
 export interface ICount {
     count: number;
 }
 
+/**
+ * Table Schema
+ */
+export interface ITableSchema {
+    schemaName?: string;
+    tableName: string;
+}
+
 export class BaseQuery {
-    protected tableName: string;
+    protected tableSchema: ITableSchema;
     protected columns?: IColumns[];
     protected insertColumns?: string[];
     protected conditions?: Array<ICondition[]>;
@@ -76,7 +111,7 @@ export class BaseQuery {
     protected orders?: IOrders[];
 
     constructor(params: IQueryParams) {
-        this.tableName = params.tableName;
+        this.tableSchema = params.tableSchema;
         this.columns = params.columns;
         this.insertColumns = params.insertColumns;
         this.conditions = params.conditions;
@@ -101,10 +136,10 @@ export class BaseQuery {
                         const isBracketrequired = condition.operator == (QueryOperator.in || QueryOperator.notIn);
                         let query = "";
                         if (condition.operator === QueryOperator.isNotNull || condition.operator === QueryOperator.isNull) {
-                            query = `${condition.tableName ?? this.tableName}.${condition.columnName} ${condition.operator}`;
+                            query = `${condition.tableSchema ?? this.tableSchema.tableName}.${condition.columnName} ${condition.operator}`;
                         } else {
                             arrParams.push(condition.columnValue);
-                            query = `${condition.tableName ?? this.tableName}.${condition.columnName} ${condition.operator} ` + (isBracketrequired ? "(" : "") + `$${i}` + (isBracketrequired ? ")" : "");
+                            query = `${condition.tableSchema ?? this.tableSchema.tableName}.${condition.columnName} ${condition.operator} ` + (isBracketrequired ? "(" : "") + `$${i}` + (isBracketrequired ? ")" : "");
                         }
                         return query;
                     }).join(" AND ");
@@ -117,9 +152,9 @@ export class BaseQuery {
 
     protected getJoinClause(): string | "" {
         let joinClause = this.joins?.map((join) => {
-            let strJoin = `\n${join.joinType} JOIN ${join.tableName} as ${join.tableAliasName ?? join.tableName} ON `;
+            let strJoin = `\n${join.joinType} JOIN ${join.tableSchema.schemaName ? join.tableSchema.schemaName + "." + join.tableSchema.tableName : join.tableSchema.tableName} as ${join.tableAliasName ?? join.tableSchema.tableName} ON `;
             strJoin += join.joinCondition.map((condition) => {
-                return `${condition.primaryTableName}.${condition.primaryColumnName} ${condition.operator} ${condition.secondaryTableName}.${condition.secondaryColumnName}`;
+                return `${condition.primaryTableSchema.schemaName ? condition.primaryTableSchema.schemaName + "." + condition.primaryTableSchema.tableName : condition.primaryTableSchema.tableName}.${condition.primaryColumnName} ${condition.operator} ${condition.secondaryTableSchema.schemaName ? condition.secondaryTableSchema.schemaName + "." + condition.secondaryTableSchema.tableName : condition.secondaryTableSchema.tableName}.${condition.secondaryColumnName}`;
             }).join(" AND ");
             return strJoin;
         }).join("");
