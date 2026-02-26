@@ -1,7 +1,7 @@
 {
   "name": "baby-elephant-orm",
   "version": "1.0.0",
-  "description": "baby-elephany-orm is a custom build object relationship management package for PostgreSQL, which improves code readability, and code re-usability. It is easy to use and can support multiple types of conditions and variuos joins.",
+  "description": "baby-elephant-orm is a custom build object relationship management package for PostgreSQL, which improves code readability, and code re-usability. It is easy to use and can support multiple types of conditions and various joins.",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "files": [
