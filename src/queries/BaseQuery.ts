@@ -1,7 +1,7 @@
-import { JoinType } from "./enums/JoinType";
-import { OrderDirection } from "./enums/OrderDirection";
-import { QueryAggregateFunction } from "./enums/QueryAggregateFunction";
-import { QueryOperator } from "./enums/QueryOperator";
+import { JoinType } from "../enums/JoinType";
+import { OrderDirection } from "../enums/OrderDirection";
+import { QueryAggregateFunction } from "../enums/QueryAggregateFunction";
+import { QueryOperator } from "../enums/QueryOperator";
 
 /**
  * Query Condition Clause
@@ -47,6 +47,7 @@ export interface IUpdate {
  * Query Parameters
  */
 export interface IQueryParams {
+    tableAlias?: string;
     tableSchema: ITableSchema;
     columns?: IColumns[];
     insertColumns?: string[];
@@ -101,6 +102,7 @@ export interface ITableSchema {
 }
 
 export class BaseQuery {
+    protected tableAlias?: string;
     protected tableSchema: ITableSchema;
     protected columns?: IColumns[];
     protected insertColumns?: string[];
@@ -111,6 +113,7 @@ export class BaseQuery {
     protected orders?: IOrders[];
 
     constructor(params: IQueryParams) {
+        this.tableAlias = params.tableAlias ?? (params.tableSchema.schemaName ? params.tableSchema.schemaName + "." + params.tableSchema.tableName : params.tableSchema.tableName);
         this.tableSchema = params.tableSchema;
         this.columns = params.columns;
         this.insertColumns = params.insertColumns;
@@ -126,20 +129,21 @@ export class BaseQuery {
         const arrParams: unknown[] = [];
         let i: number = 0;
 
-        if (!this.conditions) return { query: whereCondition, params: arrParams };
+        if (!this.conditions || this.conditions.length === 0) return { query: whereCondition, params: arrParams };
 
         const orClauses = this.conditions
             .map((conditionGroup) => {
                 const andClauses = conditionGroup
                     .map((condition) => {
                         i++;
+                        condition.tableSchema = condition.tableSchema ?? this.tableSchema;
                         const isBracketrequired = condition.operator == (QueryOperator.in || QueryOperator.notIn);
                         let query = "";
                         if (condition.operator === QueryOperator.isNotNull || condition.operator === QueryOperator.isNull) {
-                            query = `${condition.tableSchema ?? this.tableSchema.tableName}.${condition.columnName} ${condition.operator}`;
+                            query = `"${condition.tableSchema.schemaName ? condition.tableSchema.schemaName + "." + condition.tableSchema.tableName : condition.tableSchema.tableName}".${condition.columnName} ${condition.operator}`;
                         } else {
                             arrParams.push(condition.columnValue);
-                            query = `${condition.tableSchema ?? this.tableSchema.tableName}.${condition.columnName} ${condition.operator} ` + (isBracketrequired ? "(" : "") + `$${i}` + (isBracketrequired ? ")" : "");
+                            query = `"${condition.tableSchema.schemaName ? condition.tableSchema.schemaName + "." + condition.tableSchema.tableName : condition.tableSchema.tableName}".${condition.columnName} ${condition.operator} ` + (isBracketrequired ? "(" : "") + `$${i}` + (isBracketrequired ? ")" : "");
                         }
                         return query;
                     }).join(" AND ");
@@ -152,9 +156,13 @@ export class BaseQuery {
 
     protected getJoinClause(): string | "" {
         let joinClause = this.joins?.map((join) => {
-            let strJoin = `\n${join.joinType} JOIN ${join.tableSchema.schemaName ? join.tableSchema.schemaName + "." + join.tableSchema.tableName : join.tableSchema.tableName} as ${join.tableAliasName ?? join.tableSchema.tableName} ON `;
+            let tableAlias = join.tableAliasName;
+            if (!tableAlias) {
+                tableAlias = join.tableSchema.schemaName ? join.tableSchema.schemaName + "." + join.tableSchema.tableName : join.tableSchema.tableName;
+            }
+            let strJoin = `\n${join.joinType} JOIN ${join.tableSchema.schemaName ? join.tableSchema.schemaName + "." + join.tableSchema.tableName : join.tableSchema.tableName} AS "${tableAlias}" ON `;
             strJoin += join.joinCondition.map((condition) => {
-                return `${condition.primaryTableSchema.schemaName ? condition.primaryTableSchema.schemaName + "." + condition.primaryTableSchema.tableName : condition.primaryTableSchema.tableName}.${condition.primaryColumnName} ${condition.operator} ${condition.secondaryTableSchema.schemaName ? condition.secondaryTableSchema.schemaName + "." + condition.secondaryTableSchema.tableName : condition.secondaryTableSchema.tableName}.${condition.secondaryColumnName}`;
+                return `"${condition.primaryTableSchema.schemaName ? condition.primaryTableSchema.schemaName + "." + condition.primaryTableSchema.tableName : condition.primaryTableSchema.tableName}".${condition.primaryColumnName} ${condition.operator} "${condition.secondaryTableSchema.schemaName ? condition.secondaryTableSchema.schemaName + "." + condition.secondaryTableSchema.tableName : condition.secondaryTableSchema.tableName}".${condition.secondaryColumnName}`;
             }).join(" AND ");
             return strJoin;
         }).join("");

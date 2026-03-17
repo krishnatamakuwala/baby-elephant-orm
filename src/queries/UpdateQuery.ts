@@ -21,6 +21,6 @@ export class UpdateQuery extends BaseQuery {
                 whereClause.params.push(update.columnValue);
                 return `${update.columnName} = $${i}`;
             }).join(", ");
-        return { query: `UPDATE ${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName} SET ${updatePairs} ${whereClause.query} ${this.getJoinClause()} RETURNING *;`, params: whereClause.params };
+        return { query: `UPDATE ${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName} AS "${this.tableSchema.schemaName ? this.tableSchema.schemaName + "." + this.tableSchema.tableName : this.tableSchema.tableName}" SET ${updatePairs} ${whereClause.query} ${this.getJoinClause()} RETURNING *;`, params: whereClause.params };
     }
 }
