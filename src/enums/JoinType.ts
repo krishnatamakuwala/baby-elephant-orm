@@ -1,3 +1,6 @@
+/**
+ * Table Join Type
+ */
 export enum JoinType {
     inner = "INNER",
     left = "LEFT",

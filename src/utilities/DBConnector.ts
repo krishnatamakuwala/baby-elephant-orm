@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Pool } from "pg";
-import { IPreparedQuery } from "../BaseQuery";
+import { IPreparedQuery } from "../queries/BaseQuery";
 import { ModelColumnProperyMapping } from "../helpers/ModelColumnPropertyMapping";
 
 export class DBConnector {
@@ -58,6 +58,8 @@ export class DBConnector {
                     (instance as any)[propertyKey] = row[propertyKey];
                 } else if (row[(modelClass as any).TABLE_NAME + "." + columnName] !== undefined) {
                     (instance as any)[propertyKey] = row[(modelClass as any).TABLE_NAME + "." + columnName];
+                } else if (row[(modelClass as any).SCHEMA_NAME + "." + (modelClass as any).TABLE_NAME + "." + columnName] !== undefined) {
+                    (instance as any)[propertyKey] = row[(modelClass as any).SCHEMA_NAME + "." + (modelClass as any).TABLE_NAME + "." + columnName];
                 }
             }
             return instance;
